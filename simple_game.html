@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小鸟游戏 - 测试版</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: #87CEEB;
+            margin: 0;
+        }
+
+        #game {
+            position: relative;
+            width: 400px;
+            height: 600px;
+            border: 4px solid #333;
+            background: linear-gradient(180deg, #87CEEB 0%, #E0F6FF 100%);
+            overflow: hidden;
+        }
+
+        #bird {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            left: 80px;
+            top: 250px;
+            background: #FFD93D;
+            border-radius: 50%;
+        }
+
+        .pipe {
+            position: absolute;
+            width: 60px;
+            background: #2D5A27;
+            border: 3px solid #1B3A19;
+        }
+
+        .pipe-top {
+            top: 0;
+        }
+
+        .pipe-bottom {
+            bottom: 0;
+        }
+
+        .pipe-cap {
+            position: absolute;
+            width: 70px;
+            height: 25px;
+            background: #558B2F;
+            border: 3px solid #1B3A19;
+            border-radius: 5px;
+        }
+
+        .pipe-top .pipe-cap {
+            top: -25px;
+            left: -8px;
+        }
+
+        .pipe-bottom .pipe-cap {
+            bottom: -25px;
+            left: -8px;
+        }
+
+        #score {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #FF6B6B;
+        }
+
+        #start-btn {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 15px 40px;
+            font-size: 20px;
+            background: #FF6B6B;
+            color: white;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+        }
+
+        #game-over {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        #restart-btn {
+            padding: 15px 40px;
+            font-size: 20px;
+            background: #FF6B6B;
+            color: white;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🐦 小鸟飞飞 🐦</h1>
+    
+    <div id="game">
+        <div id="score">得分: 0</div>
+        <div id="bird"></div>
+        <button id="start-btn">开始游戏</button>
+        
+        <div id="game-over">
+            <h2>游戏结束</h2>
+            <p id="final-score">得分: 0</p>
+            <button id="restart-btn">重新开始</button>
+        </div>
+    </div>
+
+    <script>
+        const game = document.getElementById('game');
+        const bird = document.getElementById('bird');
+        const scoreElement = document.getElementById('score');
+        const startBtn = document.getElementById('start-btn');
+        const gameOver = document.getElementById('game-over');
+        const restartBtn = document.getElementById('restart-btn');
+        const finalScore = document.getElementById('final-score');
+
+        let gameRunning = false;
+        let score = 0;
+        let birdY = 250;
+        let birdVelocity = 0;
+        const gravity = 0.5;
+        const jumpForce = -8;
+        let pipes = [];
+        let pipeSpeed = 2;
+
+        function resetGame() {
+            gameRunning = false;
+            score = 0;
+            birdY = 250;
+            birdVelocity = 0;
+            bird.style.top = '250px';
+            scoreElement.textContent = '得分: 0';
+            startBtn.style.display = 'block';
+            gameOver.style.display = 'none';
+            
+            // 移除所有管道
+            document.querySelectorAll('.pipe').forEach(p => p.remove());
+            pipes = [];
+        }
+
+        function startGame() {
+            resetGame();
+            gameRunning = true;
+            startBtn.style.display = 'none';
+            createPipe(); // 立即创建第一个管道
+            gameLoop();
+        }
+
+        function gameLoop() {
+            if (!gameRunning) return;
+
+            // 更新小鸟
+            birdVelocity += gravity;
+            birdY += birdVelocity;
+            bird.style.top = birdY + 'px';
+
+            // 检查是否飞出屏幕
+            if (birdY < 0 || birdY > 550) {
+                endGame();
+                return;
+            }
+
+            // 更新管道
+            updatePipes();
+
+            // 创建新管道（适当间隔）
+            if (pipes.length === 0 || pipes[pipes.length-1].top.getBoundingClientRect().left < 100) {
+                createPipe();
+            }
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        function createPipe() {
+            const gap = 150;
+            const topHeight = Math.random() * 150 + 80;
+            
+            // 上管道
+            const topPipe = document.createElement('div');
+            topPipe.className = 'pipe pipe-top';
+            topPipe.style.width = '60px';
+            topPipe.style.height = topHeight + 'px';
+            topPipe.style.left = '400px';
+            topPipe.style.top = '0';
+            
+            const topCap = document.createElement('div');
+            topCap.className = 'pipe-cap';
+            topPipe.appendChild(topCap);
+            
+            // 下管道
+            const bottomPipe = document.createElement('div');
+            bottomPipe.className = 'pipe pipe-bottom';
+            bottomPipe.style.width = '60px';
+            bottomPipe.style.height = (600 - topHeight - gap) + 'px';
+            bottomPipe.style.left = '400px';
+            bottomPipe.style.bottom = '0';
+            
+            const bottomCap = document.createElement('div');
+            bottomCap.className = 'pipe-cap';
+            bottomPipe.appendChild(bottomCap);
+            
+            game.appendChild(topPipe);
+            game.appendChild(bottomPipe);
+            
+            pipes.push({ top: topPipe, bottom: bottomPipe, passed: false });
+        }
+
+        function updatePipes() {
+            pipes.forEach((pipe, index) => {
+                const topLeft = parseFloat(pipe.top.style.left);
+                const bottomLeft = parseFloat(pipe.bottom.style.left);
+                
+                pipe.top.style.left = (topLeft - pipeSpeed) + 'px';
+                pipe.bottom.style.left = (bottomLeft - pipeSpeed) + 'px';
+                
+                // 检测管道是否可见
+                if (topLeft < 350 && topLeft > -70) {
+                    pipe.top.style.borderColor = '#FF0000';  // 红色边框表示管道在屏幕内
+                }
+                
+                // 检查是否通过管道
+                if (!pipe.passed && topLeft < 80) {
+                    pipe.passed = true;
+                    score++;
+                    scoreElement.textContent = '得分: ' + score;
+                }
+                
+                // 移除屏幕外的管道
+                if (topLeft < -70) {
+                    pipe.top.remove();
+                    pipe.bottom.remove();
+                    pipes.splice(index, 1);
+                }
+                
+                // 检查碰撞
+                if (checkCollision(pipe)) {
+                    endGame();
+                }
+            });
+        }
+
+        function checkCollision(pipe) {
+            const birdRect = bird.getBoundingClientRect();
+            const topRect = pipe.top.getBoundingClientRect();
+            const bottomRect = pipe.bottom.getBoundingClientRect();
+            
+            return (birdRect.left < topRect.right && birdRect.right > topRect.left &&
+                    birdRect.top < topRect.bottom && birdRect.bottom > topRect.top) ||
+                   (birdRect.left < bottomRect.right && birdRect.right > bottomRect.left &&
+                    birdRect.top < bottomRect.bottom && birdRect.bottom > bottomRect.top);
+        }
+
+        function endGame() {
+            gameRunning = false;
+            finalScore.textContent = '得分: ' + score;
+            gameOver.style.display = 'flex';
+        }
+
+        function jump() {
+            if (!gameRunning) return;
+            birdVelocity = jumpForce;
+        }
+
+        startBtn.addEventListener('click', startGame);
+        restartBtn.addEventListener('click', startGame);
+        game.addEventListener('click', jump);
+        game.addEventListener('touchstart', (e) => { e.preventDefault(); jump(); });
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                if (!gameRunning && startBtn.style.display === 'block') {
+                    startGame();
+                } else {
+                    jump();
+                }
+            }
+        });
+
+        resetGame();
+    </script>
+</body>
+</html>

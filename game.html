@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>flycandy</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: linear-gradient(180deg, #87CEEB 0%, #E0F6FF 100%);
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+        }
+
+        #game-container {
+            position: relative;
+            width: 400px;
+            height: 600px;
+            border: 4px solid #333;
+            border-radius: 10px;
+            overflow: hidden;
+            /* 使用图片作为背景 */
+            background-image: url('images/background.jpg');
+            background-size: cover; /* 覆盖整个容器 */
+            background-position: center; /* 居中显示 */
+            background-repeat: no-repeat; /* 不重复 */
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        #bird {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            left: 80px;
+            top: 50%;
+            transition: transform 0.1s;
+        }
+
+        .bird-image {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .pipe {
+            position: absolute;
+            width: 60px;
+            /* 使用头像图片平铺（马赛克效果） */
+            background-image: url('images/lulu.jpg');
+            background-repeat: repeat; /* 左右上下都重复 */
+            background-size: 30px 30px; /* 缩小头像到20x20像素 */
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .pipe-cap {
+            position: absolute;
+            width: 70px;
+            height: 25px;
+            /* 管道盖子也使用马赛克头像 */
+            background-image: url('images/lulu.jpg');
+            background-repeat: repeat;
+            background-size: 25px 25px; /* 更小的马赛克 */
+            border: 1px solid rgba(0,0,0,0.1);
+            border-radius: 8px;
+        }
+
+        .pipe-top {
+            top: 0;
+        }
+
+        .pipe-top .pipe-cap {
+            top: -25px;
+            left: -8px;
+        }
+
+        .pipe-bottom {
+            bottom: 0;
+        }
+
+        .pipe-bottom .pipe-cap {
+            bottom: -25px;
+            left: -8px;
+        }
+
+        #score-display {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 28px;
+            font-weight: bold;
+            color: #FF6B6B;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            z-index: 10;
+        }
+
+        #gift-button {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            cursor: pointer;
+            display: none;
+            z-index: 5;
+            animation: pulse 0.5s ease-in-out infinite alternate;
+        }
+
+        .gift-box {
+            width: 100%;
+            height: 100%;
+            background: #FF6B6B;
+            border-radius: 5px;
+            position: relative;
+        }
+
+        .gift-lid {
+            position: absolute;
+            top: -10px;
+            left: -5px;
+            width: 90px;
+            height: 20px;
+            background: #FF8E8E;
+            border-radius: 5px 5px 0 0;
+        }
+
+        .gift-ribbon-v {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 10px;
+            height: 100%;
+            background: #FFD93D;
+        }
+
+        .gift-ribbon-h {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            transform: translateY(-50%);
+            width: 100%;
+            height: 10px;
+            background: #FFD93D;
+        }
+
+        .gift-bow {
+            position: absolute;
+            top: 25%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 24px;
+            height: 24px;
+        }
+
+        .gift-bow::before,
+        .gift-bow::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 0;
+            border: 8px solid transparent;
+            border-bottom-color: #FFD93D;
+        }
+
+        .gift-bow::before {
+            transform: rotate(-45deg);
+            left: 0;
+        }
+
+        .gift-bow::after {
+            transform: rotate(45deg);
+            right: 0;
+        }
+
+        @keyframes pulse {
+            from { transform: scale(1); }
+            to { transform: scale(1.1); }
+        }
+
+        #start-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        #start-screen h1 {
+            color: #FFD93D;
+            font-size: 36px;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        #start-screen p {
+            color: #fff;
+            font-size: 18px;
+            margin-bottom: 30px;
+        }
+
+        #start-btn, #restart-btn {
+            padding: 15px 40px;
+            font-size: 20px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #FF6B6B, #FF8E53);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            transition: transform 0.2s;
+        }
+
+        #start-btn:hover, #restart-btn:hover {
+            transform: scale(1.05);
+        }
+
+        #game-over-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        #game-over-screen h2 {
+            color: #FF6B6B;
+            font-size: 40px;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        #final-score {
+            color: #FFD93D;
+            font-size: 28px;
+            margin-bottom: 30px;
+        }
+
+        #gift-modal {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(3px);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+        }
+
+        #gift-modal .modal-content {
+            background: linear-gradient(135deg, #FFE66D, #FF6B6B);
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        #gift-modal h2 {
+            color: white;
+            font-size: 32px;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        #gift-modal p {
+            color: white;
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+
+        #gift-modal .gift-image {
+            margin: 20px 0;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        #gift-modal .gift-image img {
+            width: 250px;
+            height: 200px;
+            object-fit: cover;
+        }
+
+        #close-gift-btn {
+            padding: 12px 30px;
+            font-size: 16px;
+            font-weight: bold;
+            background: white;
+            color: #FF6B6B;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        #close-gift-btn:hover {
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <h1 style="color: #FF6B6B; margin-bottom: 20px; text-shadow: 2px 2px 4px rgba(0,0,0,0.2);">💗 flycandy 💗</h1>
+    
+    <div id="game-container">
+        <div id="score-display">得分: 0</div>
+        
+        <div id="bird">
+            <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=cute%20yellow%20bird%20cartoon%20style%20simple%20flappy&image_size=square" alt="小鸟" class="bird-image">
+        </div>
+        
+        <div id="gift-button">
+            <div class="gift-box">
+                <div class="gift-lid"></div>
+                <div class="gift-ribbon-v"></div>
+                <div class="gift-ribbon-h"></div>
+                <div class="gift-bow"></div>
+            </div>
+        </div>
+        
+        <!-- 开始界面 -->
+        <div id="start-screen">
+            <h1>🐦 flycandy 🐦</h1>
+            <p>点击屏幕或按空格键让小唐飞起来！</p>
+            <p style="font-size: 14px; color: #ddd;">通过10个管道会有惊喜哦~</p>
+            <button id="start-btn">开始游戏吧</button>
+        </div>
+        
+        <!-- 游戏结束界面 -->
+        <div id="game-over-screen">
+            <h2>游戏结束</h2>
+            <div id="final-score">最终得分: 0</div>
+            <button id="restart-btn">重新开始</button>
+        </div>
+        
+        <!-- 礼物弹窗 -->
+        <div id="gift-modal">
+            <div class="modal-content">
+                <h2>🎁 恭喜你即将获得神秘大礼！(￣▽￣)~*🎁</h2>
+                <!-- 图片显示区域 -->
+                <div class="gift-image">
+                    <img id="gift-image" src="images/background.jpg" alt="礼物图片">
+                </div>
+                <p>小p制作</p>
+                <button id="close-gift-btn">继续游戏</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 游戏元素
+        const gameContainer = document.getElementById('game-container');
+        const bird = document.getElementById('bird');
+        const scoreDisplay = document.getElementById('score-display');
+        const startScreen = document.getElementById('start-screen');
+        const gameOverScreen = document.getElementById('game-over-screen');
+        const finalScore = document.getElementById('final-score');
+        const giftButton = document.getElementById('gift-button');
+        const giftModal = document.getElementById('gift-modal');
+        
+        // 按钮元素
+        const startBtn = document.getElementById('start-btn');
+        const restartBtn = document.getElementById('restart-btn');
+        const closeGiftBtn = document.getElementById('close-gift-btn');
+        
+        // 游戏状态
+        let gameRunning = false;
+        let score = 0;
+        let birdY = 250;
+        let birdVelocity = 0;
+        const gravity = 0.5;
+        const jumpForce = -8;
+        let pipes = [];
+        let pipeSpeed = 2;
+        let pipeInterval = 1500;
+        let lastPipeTime = 0;
+        let giftUnlocked = false;
+        let giftCollected = false;
+        
+        // 重置游戏
+        function resetGame() {
+            gameRunning = false;
+            score = 0;
+            birdY = 250;
+            birdVelocity = 0;
+            pipes = [];
+            giftUnlocked = false;
+            giftCollected = false;
+            giftButton.style.display = 'none';
+            
+            // 清空管道
+            document.querySelectorAll('.pipe').forEach(pipe => pipe.remove());
+            
+            // 更新显示
+            scoreDisplay.textContent = '得分: 0';
+            bird.style.top = birdY + 'px';
+            bird.style.transform = 'rotate(0deg)';
+            
+            // 显示开始界面
+            startScreen.style.display = 'flex';
+            gameOverScreen.style.display = 'none';
+            giftModal.style.display = 'none';
+        }
+        
+        // 开始游戏
+        function startGame() {
+            resetGame();
+            gameRunning = true;
+            startScreen.style.display = 'none';
+            lastPipeTime = Date.now();
+            gameLoop();
+        }
+        
+        // 游戏主循环
+        function gameLoop() {
+            if (!gameRunning) return;
+            
+            const now = Date.now();
+            
+            // 更新小鸟位置
+            birdVelocity += gravity;
+            birdY += birdVelocity;
+            bird.style.top = birdY + 'px';
+            
+            // 旋转小鸟
+            const rotation = Math.min(Math.max(birdVelocity * 5, -30), 90);
+            bird.style.transform = `rotate(${rotation}deg)`;
+            
+            // 检查碰撞
+            if (checkCollision()) {
+                gameOver();
+                return;
+            }
+            
+            // 生成管道（控制管道密度），通过10个管道后不再生成
+            if (score < 10 && (pipes.length === 0 || parseFloat(pipes[pipes.length-1].top.style.right) > 170)) {
+                // 数值越小，管道越密集（当前150）
+                createPipe();
+            }
+            
+            // 更新管道位置
+            updatePipes();
+            
+            // 更新礼物按钮位置（如果已解锁且未收集）
+            if (giftUnlocked && !giftCollected && giftButton.style.display === 'block') {
+                const giftRight = parseFloat(giftButton.style.right);
+                giftButton.style.right = (giftRight + pipeSpeed) + 'px';
+            }
+            
+            // 检查礼物按钮碰撞
+            checkGiftButton();
+            
+            // 更新得分显示
+            scoreDisplay.textContent = '得分: ' + score;
+            
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // 创建管道
+        function createPipe() {
+            const pipeGap = 200;
+            const pipeHeight = Math.random() * 100 + 80;
+            
+            // 上管道
+            const topPipe = document.createElement('div');
+            topPipe.className = 'pipe pipe-top';
+            topPipe.style.width = '60px';
+            topPipe.style.height = pipeHeight + 'px';
+            topPipe.style.right = '-60px';
+            topPipe.style.top = '0';
+            topPipe.dataset.passed = 'false';
+            
+            // 上管道顶部盖子
+            const topCap = document.createElement('div');
+            topCap.className = 'pipe-cap';
+            topPipe.appendChild(topCap);
+            
+            // 下管道
+            const bottomPipe = document.createElement('div');
+            bottomPipe.className = 'pipe pipe-bottom';
+            bottomPipe.style.width = '60px';
+            bottomPipe.style.height = (600 - pipeHeight - pipeGap) + 'px';
+            bottomPipe.style.right = '-60px';
+            bottomPipe.style.bottom = '0';
+            bottomPipe.dataset.passed = 'false';
+            
+            // 下管道底部盖子
+            const bottomCap = document.createElement('div');
+            bottomCap.className = 'pipe-cap';
+            bottomPipe.appendChild(bottomCap);
+            
+            gameContainer.appendChild(topPipe);
+            gameContainer.appendChild(bottomPipe);
+            
+            pipes.push({ top: topPipe, bottom: bottomPipe, passed: false });
+        }
+        
+        // 更新管道位置
+        function updatePipes() {
+            pipes.forEach((pipe, index) => {
+                const topRight = parseFloat(pipe.top.style.right);
+                const bottomRight = parseFloat(pipe.bottom.style.right);
+                
+                // 管道从右侧进入，向右移动（right值增加）
+                pipe.top.style.right = (topRight + pipeSpeed) + 'px';
+                pipe.bottom.style.right = (bottomRight + pipeSpeed) + 'px';
+                
+                // 检查是否通过管道（当管道移动到小鸟位置时）
+                if (!pipe.passed && topRight > 70 && topRight < 90) {
+                    pipe.passed = true;
+                    score++;
+                    
+                    // 检查是否解锁礼物
+                    if (score >= 10 && !giftUnlocked) {
+                        giftUnlocked = true;
+                        showGiftButton();
+                    }
+                }
+                
+                // 移除屏幕外的管道（当管道完全离开左侧）
+                if (topRight > 460) {
+                    pipe.top.remove();
+                    pipe.bottom.remove();
+                    pipes.splice(index, 1);
+                }
+            });
+        }
+        
+        // 显示礼物按钮（从右侧进入，像管道一样）
+        function showGiftButton() {
+            // 延迟显示，控制与第10个管道的距离（毫秒）
+            // 数值越大，礼物盒出现越晚，与管道距离越远
+            const giftDelay = 800;
+            
+            setTimeout(() => {
+                giftButton.style.display = 'block';
+                giftButton.style.right = '-60px'; // 从右侧外面进入
+                giftButton.style.top = '50%';
+                giftButton.style.transform = 'translateY(-50%)';
+                giftButton.style.left = 'auto'; // 取消left定位
+            }, giftDelay);
+        }
+        
+        // 检查礼物按钮碰撞
+        function checkGiftButton() {
+            if (!giftUnlocked || giftCollected) return;
+            
+            const birdRect = bird.getBoundingClientRect();
+            const giftRect = giftButton.getBoundingClientRect();
+            const containerRect = gameContainer.getBoundingClientRect();
+            
+            // 转换为相对位置
+            const birdX = birdRect.left - containerRect.left;
+            const birdY = birdRect.top - containerRect.top;
+            const giftX = giftRect.left - containerRect.left;
+            const giftY = giftRect.top - containerRect.top;
+            
+            if (birdX < giftX + 80 &&
+                birdX + 50 > giftX &&
+                birdY < giftY + 80 &&
+                birdY + 50 > giftY) {
+                giftCollected = true;
+                giftButton.style.display = 'none';
+                giftModal.style.display = 'flex';
+            }
+        }
+        
+        // 检查碰撞
+        function checkCollision() {
+            const birdRect = bird.getBoundingClientRect();
+            const containerRect = gameContainer.getBoundingClientRect();
+            
+            // 检查是否飞出屏幕
+            if (birdY < 0 || birdY > 550) {
+                return true;
+            }
+            
+            // 检查管道碰撞
+            for (const pipe of pipes) {
+                const topPipeRect = pipe.top.getBoundingClientRect();
+                const bottomPipeRect = pipe.bottom.getBoundingClientRect();
+                
+                if (birdRect.left < topPipeRect.right &&
+                    birdRect.right > topPipeRect.left &&
+                    birdRect.top < topPipeRect.bottom &&
+                    birdRect.bottom > topPipeRect.top) {
+                    return true;
+                }
+                
+                if (birdRect.left < bottomPipeRect.right &&
+                    birdRect.right > bottomPipeRect.left &&
+                    birdRect.top < bottomPipeRect.bottom &&
+                    birdRect.bottom > bottomPipeRect.top) {
+                    return true;
+                }
+            }
+            
+            return false;
+        }
+        
+        // 游戏结束
+        function gameOver() {
+            gameRunning = false;
+            finalScore.textContent = '最终得分: ' + score;
+            gameOverScreen.style.display = 'flex';
+        }
+        
+        // 小鸟跳跃
+        function jump() {
+            if (!gameRunning) return;
+            birdVelocity = jumpForce;
+        }
+        
+        // 事件监听
+        startBtn.addEventListener('click', startGame);
+        restartBtn.addEventListener('click', startGame);
+        closeGiftBtn.addEventListener('click', () => {
+            giftModal.style.display = 'none';
+        });
+        
+        // 点击/触摸事件
+        gameContainer.addEventListener('click', jump);
+        gameContainer.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            jump();
+        });
+        
+        // 空格键
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                if (!gameRunning && startScreen.style.display === 'flex') {
+                    startGame();
+                } else {
+                    jump();
+                }
+            }
+        });
+        
+        // 初始化
+        resetGame();
+    </script>
+</body>
+</html>
