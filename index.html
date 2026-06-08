@@ -637,13 +637,31 @@
         }
         
         // 事件监听
-        startBtn.addEventListener('click', startGame);
-        restartBtn.addEventListener('click', startGame);
-        closeGiftBtn.addEventListener('click', () => {
-            giftModal.style.display = 'none';
-        });
+        // 开始游戏按钮（支持点击和触摸）
+        function handleStartGame(e) {
+            e.preventDefault();
+            startGame();
+        }
+        startBtn.addEventListener('click', handleStartGame);
+        startBtn.addEventListener('touchstart', handleStartGame);
         
-        // 点击/触摸事件
+        // 重新开始按钮（支持点击和触摸）
+        function handleRestartGame(e) {
+            e.preventDefault();
+            startGame();
+        }
+        restartBtn.addEventListener('click', handleRestartGame);
+        restartBtn.addEventListener('touchstart', handleRestartGame);
+        
+        // 关闭礼物弹窗（支持点击和触摸）
+        function handleCloseGift(e) {
+            e.preventDefault();
+            giftModal.style.display = 'none';
+        }
+        closeGiftBtn.addEventListener('click', handleCloseGift);
+        closeGiftBtn.addEventListener('touchstart', handleCloseGift);
+        
+        // 游戏区域点击/触摸事件
         gameContainer.addEventListener('click', jump);
         gameContainer.addEventListener('touchstart', (e) => {
             e.preventDefault();
