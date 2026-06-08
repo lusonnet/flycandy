@@ -12,29 +12,26 @@
         }
 
         body {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            background: linear-gradient(180deg, #87CEEB 0%, #E0F6FF 100%);
-            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
             overflow: hidden;
+            font-family: 'Arial', sans-serif;
         }
 
         #game-container {
-            position: relative;
-            width: 400px;
-            height: 600px;
-            border: 4px solid #333;
-            border-radius: 10px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             overflow: hidden;
             /* 使用图片作为背景 */
             background-image: url('images/background.jpg');
             background-size: cover; /* 覆盖整个容器 */
             background-position: center; /* 居中显示 */
             background-repeat: no-repeat; /* 不重复 */
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
         }
 
         #bird {
@@ -324,7 +321,7 @@
         }
     </style>
 </head>
-<body>    
+<body>
     <div id="game-container">
         <div id="score-display">得分: 0</div>
         
