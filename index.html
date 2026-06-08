@@ -478,8 +478,9 @@
         
         // 创建管道
         function createPipe() {
-            const pipeGap = 200;
-            const pipeHeight = Math.random() * 100 + 80;
+            const pipeGap = 150; // 减小管道间隙（全屏模式）
+            const pipeHeight = Math.random() * 80 + 60; // 减小管道最小高度
+            const containerHeight = gameContainer.offsetHeight; // 获取容器高度
             
             // 上管道
             const topPipe = document.createElement('div');
@@ -499,7 +500,7 @@
             const bottomPipe = document.createElement('div');
             bottomPipe.className = 'pipe pipe-bottom';
             bottomPipe.style.width = '60px';
-            bottomPipe.style.height = (600 - pipeHeight - pipeGap) + 'px';
+            bottomPipe.style.height = (containerHeight - pipeHeight - pipeGap) + 'px';
             bottomPipe.style.right = '-60px';
             bottomPipe.style.bottom = '0';
             bottomPipe.dataset.passed = 'false';
