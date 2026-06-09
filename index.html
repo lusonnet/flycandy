@@ -300,7 +300,7 @@
 
         #gift-modal .gift-image img {
             width: 250px;
-            height: 200px;
+            height: 300px; /* 增大图片高度 */
             object-fit: cover;
         }
 
@@ -341,7 +341,7 @@
         <!-- 开始界面 -->
         <div id="start-screen">
             <h1>🐦 flycandy 🐦</h1>
-            <p>点击让小唐飞起来！</p>
+            <p>点击屏幕让小唐飞起来！</p>
             <p style="font-size: 14px; color: #ddd;">通过10个管道会有惊喜哦~</p>
             <button id="start-btn">开始游戏吧</button>
         </div>
@@ -356,12 +356,11 @@
         <!-- 礼物弹窗 -->
         <div id="gift-modal">
             <div class="modal-content">
-                <h2>🎁 恭喜你即将获得神秘大礼！(￣▽￣)~*🎁</h2>
-                <!-- 图片显示区域 -->
+                <h2>恭喜小唐即将获得神秘大礼！(￣▽￣)~*🎁</h2>
                 <div class="gift-image">
-                    <img id="gift-image" src="images/background.jpg" alt="礼物图片">
+                    <img id="gift-image" src="images/gift.jpg" alt="礼物图片">
                 </div>
-                <p>小p制作</p>
+                <p>@lulu</p>
                 <button id="close-gift-btn">继续游戏</button>
             </div>
         </div>
@@ -526,20 +525,27 @@
                 pipe.top.style.right = (topRight + pipeSpeed) + 'px';
                 pipe.bottom.style.right = (bottomRight + pipeSpeed) + 'px';
                 
-                // 检查是否通过管道（当管道移动到小鸟位置时）
-                if (!pipe.passed && topRight > 70 && topRight < 90) {
-                    pipe.passed = true;
-                    score++;
-                    
-                    // 检查是否解锁礼物
-                    if (score >= 10 && !giftUnlocked) {
-                        giftUnlocked = true;
-                        showGiftButton();
+                // 检查是否通过管道（当小鸟完全飞过管道后）
+                if (!pipe.passed) {
+                    const birdRect = bird.getBoundingClientRect();
+                    const pipeRect = pipe.top.getBoundingClientRect();
+                    // 小鸟右边缘超过管道右边缘时，才算完全通过
+                    // 同时确保管道已经完全进入屏幕（左边缘大于0）
+                    if (birdRect.right > pipeRect.right && pipeRect.left > 0) {
+                        pipe.passed = true;
+                        score++;
+                        
+                        // 检查是否解锁礼物
+                        if (score >= 10 && !giftUnlocked) {
+                            giftUnlocked = true;
+                            showGiftButton();
+                        }
                     }
                 }
                 
                 // 移除屏幕外的管道（当管道完全离开左侧）
-                if (topRight > 460) {
+                const containerWidth = gameContainer.offsetWidth;
+                if (topRight > containerWidth + 60) {
                     pipe.top.remove();
                     pipe.bottom.remove();
                     pipes.splice(index, 1);
