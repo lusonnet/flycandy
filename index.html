@@ -341,7 +341,7 @@
         <!-- 开始界面 -->
         <div id="start-screen">
             <h1>🐦 flycandy 🐦</h1>
-            <p>点击屏幕或按空格键让小唐飞起来！</p>
+            <p>点击让小唐飞起来！</p>
             <p style="font-size: 14px; color: #ddd;">通过10个管道会有惊喜哦~</p>
             <button id="start-btn">开始游戏吧</button>
         </div>
@@ -478,7 +478,7 @@
         
         // 创建管道
         function createPipe() {
-            const pipeGap = 140; // 减小管道间隙（全屏模式）
+            const pipeGap = 145; // 减小管道间隙（全屏模式）
             const pipeHeight = Math.random() * 80 + 60; // 减小管道最小高度
             const containerHeight = gameContainer.offsetHeight; // 获取容器高度
             
